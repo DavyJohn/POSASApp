@@ -5,7 +5,7 @@ package com.dingrui.posasapp;
  */
 
 public class Contance {
-    public static final String BASEURL = "http://192.168.6.32:18080";
+    public static final String BASEURL = "https://flex.dingruiit.com";
     public static final String LOGIN = "/posas-gateway/newAppLogin/login";
     public static final String MAIN = "/posas-gateway/newAppLogin/index";
 }

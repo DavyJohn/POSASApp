@@ -1,5 +1,6 @@
 package com.dingrui.posasapp;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -7,22 +8,21 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.view.ViewGroup;
+import android.view.KeyEvent;
+import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.LinearLayout;
 
+import com.dingrui.posasapp.utils.CheckPermissionsActivity;
 import com.dingrui.posasapp.utils.SharedPreferencesUtil;
 
 import java.io.File;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends CheckPermissionsActivity {
     private WebView mWeb;
     public static ValueCallback mFilePathCallback;
     private static final int REQUEST_CODE_PICK_PHOTO = 12;
@@ -32,16 +32,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initWeb();
     }
+
     private void initWeb(){
+
         mWeb = findViewById(R.id.webview);
         mWeb.getSettings().setJavaScriptEnabled(true);
         mWeb.getSettings().setUseWideViewPort(true);
-//        mWeb.getSettings().setLoadWithOverviewMode(true);
         mWeb.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         mWeb.getSettings().setLoadsImagesAutomatically(true);
         mWeb.getSettings().setAllowFileAccess(true);
         mWeb.getSettings().setAppCacheEnabled(true);
         mWeb.getSettings().setDatabaseEnabled(true);
+        String dir = this.getApplicationContext().getDir("database", Context.MODE_PRIVATE).getPath();
+        mWeb.getSettings().setGeolocationDatabasePath(dir);
+        mWeb.getSettings().setGeolocationEnabled(true);
         mWeb.getSettings().setBuiltInZoomControls(true); // 显示放大缩小
         mWeb.getSettings().setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
         //设置 缓存模式
@@ -50,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         mWeb.getSettings().setDomStorageEnabled(true);
         mWeb.getSettings().setDefaultTextEncodingName("utf-8");
         mWeb.setWebChromeClient(new WebChromeClient(){
+
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 super.onProgressChanged(view, newProgress);
@@ -80,6 +85,13 @@ public class MainActivity extends AppCompatActivity {
             public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {//android 系统版本3.0+
                 takeForPhoto();
                 mFilePathCallback = uploadMsg;
+            }
+
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, true, false);
+                super.onGeolocationPermissionsShowPrompt(origin, callback);
+
             }
         });
         mWeb.setWebViewClient(new WebViewClient(){
@@ -127,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, REQUEST_CODE_PICK_PHOTO);
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -158,14 +171,27 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+//    @Override
+//    public void onBackPressed() {
+//        if(mWeb.canGoBack()){
+//            mWeb.goBack();
+//        }else {
+//            finish();//
+//        }
+//    }
+
     @Override
-    public void onBackPressed() {
-        if(mWeb.canGoBack()){
-            mWeb.goBack();
-        }else {
-            finish();//
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK){
+            if(mWeb.canGoBack()){
+                mWeb.goBack();
+            }else {
+                finish();//
+            }return false;
         }
+        return super.onKeyDown(keyCode, event);
     }
+
     //销毁Webview
     @Override
     protected void onDestroy() {
